@@ -30,6 +30,7 @@ import TripBookings from "@/components/TripBookings";
 import PlaceChooser from "@/components/PlaceChooser";
 import TripResources from "@/components/TripResources";
 import TripPacking from "@/components/TripPacking";
+import TripWants from "@/components/TripWants";
 import TripFiles from "@/components/TripFiles";
 import AddFromLink from "@/components/AddFromLink";
 import AskOtto from "@/components/AskOtto";
@@ -44,6 +45,7 @@ import { dateForDay, dayCount, durationLabel, formatDay, formatRange } from "@/l
 import { directionsUrl } from "@/lib/directions";
 import type {
   ItineraryItemDTO,
+  TripWantDTO,
   PlaceDTO,
   TripDTO,
   TripResourceDTO,
@@ -77,6 +79,8 @@ export default function TripPlanner({
   ownerImage,
   people,
   resources,
+  wants,
+  me,
   documents,
 }: {
   /// Whether Otto is around to explain an empty trip. Decided on the server.
@@ -85,6 +89,9 @@ export default function TripPlanner({
   initialItems: ItineraryItemDTO[];
   places: PlaceDTO[];
   resources: TripResourceDTO[];
+  wants: TripWantDTO[];
+  /// The current user's id, so the wants list knows which rows are theirs.
+  me: string;
   documents: TripDocumentDTO[];
   role: TripRole;
   ownerId: string;
@@ -1686,6 +1693,12 @@ export default function TripPlanner({
 
         {view === "before" && (
           <div className="space-y-6">
+            <TripWants
+              tripId={trip.id}
+              initial={wants}
+              me={me}
+              isOwner={role === "owner"}
+            />
             <TripResources tripId={trip.id} initial={toGet} canEdit />
             <TripPacking tripId={trip.id} initial={toPack} canEdit otto={otto} />
           </div>

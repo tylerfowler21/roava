@@ -148,6 +148,20 @@ export async function runOtto(input: {
   });
   if (!trip) throw new Error("No such trip");
 
+  /// What the people on this trip said they wanted out of it.
+  ///
+  /// The reason he beats a cold draft is that he reads what is already there,
+  /// and on a trip with several households on it the most useful thing there
+  /// is not the itinerary — it is the list of what everybody asked for and
+  /// nobody has scheduled yet. Attributed, because "two of them asked for the
+  /// same thing" is worth knowing and a bare list loses it.
+  const wants = await prisma.tripWant.findMany({
+    where: { tripId: input.tripId },
+    orderBy: { createdAt: "asc" },
+    take: 40,
+    select: { label: true, user: { select: { name: true, username: true } } },
+  });
+
   const items = await prisma.itineraryItem.findMany({
     where: { tripId: input.tripId, dayIndex: { gte: input.dayIndex - 1, lte: input.dayIndex + 1 } },
     orderBy: [{ dayIndex: "asc" }, { position: "asc" }],
@@ -207,6 +221,19 @@ export async function runOtto(input: {
           describeDay(`Day ${input.dayIndex}`, dateOf(input.dayIndex - 1), onDay(input.dayIndex - 1)),
         );
       }
+      if (wants.length > 0) {
+        parts.push(
+          "What the people on this trip have asked for. Some of it may already " +
+            "be planned on another day — check before proposing it again.\n" +
+            wants
+              .map((w) => {
+                const who = w.user.name ?? (w.user.username ? `@${w.user.username}` : "someone");
+                return `- ${w.label} (${who})`;
+              })
+              .join("\n"),
+        );
+      }
+
       parts.push(
         describeDay(
           `Day ${input.dayIndex + 1} — THE ONE TO FILL`,

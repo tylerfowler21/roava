@@ -28,6 +28,10 @@ export default async function TripPage({
         include: itemWithArrivalsInclude,
       },
       resources: { orderBy: { position: "asc" } },
+      wants: {
+        orderBy: { createdAt: "asc" },
+        include: { user: { select: { name: true, username: true, image: true } } },
+      },
       documents: { orderBy: { createdAt: "desc" } },
     },
   });
@@ -66,6 +70,13 @@ export default async function TripPage({
       initialItems={items}
       places={places.map(serializePlace)}
       resources={trip.resources}
+      wants={trip.wants.map((w) => ({
+        id: w.id,
+        label: w.label,
+        userId: w.userId,
+        user: w.user,
+      }))}
+      me={user.id}
       documents={trip.documents.map((d) => ({
         id: d.id,
         tripId: d.tripId,

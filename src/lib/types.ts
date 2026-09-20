@@ -54,6 +54,15 @@ export type TripDTO = {
   publishAskedAt: string | null;
 };
 
+/// Something one person on a trip wants to do. Attributed, because an
+/// unattributed wish list is a suggestion box.
+export type TripWantDTO = {
+  id: string;
+  label: string;
+  userId: string;
+  user: { name: string | null; username: string | null; image: string | null };
+};
+
 export type ItineraryItemDTO = {
   id: string;
   tripId: string;

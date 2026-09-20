@@ -34,6 +34,10 @@ export async function GET(
         include: itemWithArrivalsInclude,
       },
       resources: { orderBy: { position: "asc" } },
+      wants: {
+        orderBy: { createdAt: "asc" },
+        include: { user: { select: { name: true, username: true, image: true } } },
+      },
       documents: { orderBy: { createdAt: "desc" } },
     },
   });
@@ -43,6 +47,7 @@ export async function GET(
     trip: serializeTrip(trip),
     role: access.role,
     resources: trip.resources,
+    wants: trip.wants,
     documents: trip.documents.map((d) => ({
       id: d.id,
       tripId: d.tripId,

@@ -107,6 +107,7 @@ model User {
   categoryEdits  CategoryOverride[]
   placeShares    PlaceShare[]
   aiDrafts       AiDraft[]
+  wants          TripWant[]
   memories       Memory[]
   photos         Photo[]
   blocking       Block[]            @relation("blocker")
@@ -307,6 +308,7 @@ model Trip {
   share         TripShare?
   collaborators TripCollaborator[]
   resources     TripResource[]
+  wants         TripWant[]
   documents     TripDocument[]
   copiedFrom    Trip?              @relation("copies", fields: [copiedFromId], references: [id], onDelete: SetNull)
   copies        Trip[]             @relation("copies")
@@ -563,6 +565,34 @@ model TripDocument {
 /// These are the notes that live in a group chat and are lost by the time they
 /// matter. Keeping them on the trip means they are read on the way to the
 /// airport, which is when they are worth anything.
+/// Something one person on a trip wants to do.
+///
+/// A trip with five families on it has one organiser and nineteen other
+/// opinions, and until now there was nowhere to put them: the itinerary is
+/// editable by everyone, which sounds like collaboration and works like a
+/// scrum. This is the quiet half — say what you would like, see what everyone
+/// else said, and let whoever is building the days read the lot.
+///
+/// Not a TripResource with a kind. Those are checklist rows, answering "have
+/// I got this yet"; a want is attributed to a person and answers "what would
+/// make this trip worth it for you", which is a different question with a
+/// different lifetime — it stops mattering once the day is planned.
+model TripWant {
+  id     String @id @default(cuid())
+  tripId String
+  /// Whose it is. The whole point: an unattributed wish list is a suggestion
+  /// box, and what an organiser needs to know is who still has not been
+  /// listened to.
+  userId String
+  label  String
+  createdAt DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tripId, createdAt])
+}
+
 model TripResource {
   id       String  @id @default(cuid())
   tripId   String

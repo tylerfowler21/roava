@@ -314,6 +314,14 @@ export const profileSchema = z.object({
   sharesVisited: z.boolean().optional(),
 });
 
+/// One line about what somebody wants out of a trip. Short on purpose: this
+/// is "the Matterhorn museum" or "one proper sit-down dinner", not an essay,
+/// and a list of twenty of these has to stay scannable by whoever is building
+/// the days from it.
+export const wantCreateSchema = z.object({
+  label: trimmed(120).min(1, "What would you like to do?"),
+});
+
 export const followSchema = z.object({
   username: z.string().trim().toLowerCase().min(1, "Which person?"),
 });

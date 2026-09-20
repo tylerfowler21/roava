@@ -281,6 +281,15 @@ model Trip {
   notes       String?
   /// Hex colour used for this trip's pins and accents
   color       String    @default("#0F2D4A")
+  /// ISO 4217, for everything priced on this trip.
+  ///
+  /// One per trip rather than one per item. A day whose costs are in three
+  /// currencies cannot be totalled without exchange rates, and rates are a
+  /// live feed, a cache, a staleness policy and an argument about which day's
+  /// rate applied — none of which belongs in a trip planner. Somebody
+  /// travelling through the eurozone and Switzerland picks one and estimates
+  /// the rest, which is what they were doing on paper anyway.
+  currency    String    @default("USD")
   /// A photograph chosen for this trip, stored privately like a journal
   /// photo and read back through /api/trips/[id]/cover. Null for the many
   /// trips nobody picks one for — those borrow a photograph of one of their
@@ -420,6 +429,14 @@ model Photo {
 model ItineraryItem {
   id        String   @id @default(cuid())
   tripId    String
+  /// What this costs, as a whole number of the trip currency's smallest unit
+  /// — cents, pence, yen. Never a decimal: a price is a count of indivisible
+  /// things, and as a float it produces totals ending in .999999994 that
+  /// nobody can explain and everybody notices.
+  ///
+  /// Null is "nobody has priced this", which is not the same as free. A day
+  /// of unpriced stops shows no total rather than a confident zero.
+  costMinor Int?
   /// "stop" or "travel"
   kind      String   @default("stop")
   placeId   String?

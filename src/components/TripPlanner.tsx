@@ -31,6 +31,8 @@ import PlaceChooser from "@/components/PlaceChooser";
 import TripResources from "@/components/TripResources";
 import TripPacking from "@/components/TripPacking";
 import TripWants from "@/components/TripWants";
+import CostField from "@/components/CostField";
+import { anyPriced, formatMoney, totalOf } from "@/lib/money";
 import TripFiles from "@/components/TripFiles";
 import AddFromLink from "@/components/AddFromLink";
 import AskOtto from "@/components/AskOtto";
@@ -930,6 +932,11 @@ export default function TripPlanner({
               formatRange(trip),
               `${days} ${days === 1 ? "day" : "days"}`,
               stopCount > 0 ? `${stopCount} ${stopCount === 1 ? "stop" : "stops"}` : null,
+              // What the plan adds up to so far. Only once something is
+              // priced, and deliberately not called a budget: it is the sum
+              // of what has been written down, which on a half-planned trip
+              // is a floor rather than an estimate.
+              anyPriced(items) ? formatMoney(totalOf(items), trip.currency) : null,
             ]
               .filter(Boolean)
               .join(" · ")}
@@ -1049,6 +1056,10 @@ export default function TripPlanner({
               {[
                 `${dayItems.length} ${dayItems.length === 1 ? "stop" : "stops"}`,
                 dayDate ? formatDay(dayDate) : null,
+                // Only when somebody has priced something. A day of unpriced
+                // stops showing a confident zero is worse than showing
+                // nothing.
+                anyPriced(dayItems) ? formatMoney(totalOf(dayItems), trip.currency) : null,
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -1296,6 +1307,11 @@ export default function TripPlanner({
                           ))}
                         </select>
                       )}
+                      <CostField
+                        costMinor={item.costMinor}
+                        currency={trip.currency}
+                        onSave={(costMinor) => patchItem(item.id, { costMinor })}
+                      />
                       <select
                         aria-label="Move to day"
                         className="rounded-full border border-line bg-surface px-2 py-1 text-xs"

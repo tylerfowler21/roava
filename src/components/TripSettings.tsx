@@ -30,6 +30,7 @@ export default function TripSettings({
   const [startDate, setStartDate] = useState(toDateInput(trip.startDate));
   const [endDate, setEndDate] = useState(toDateInput(trip.endDate));
   const [color, setColor] = useState(trip.color);
+  const [currency, setCurrency] = useState(trip.currency);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Deleting a whole itinerary deserves a second click, not a browser dialog.
@@ -85,6 +86,7 @@ export default function TripSettings({
         startDate: startDate || null,
         endDate: endDate || null,
         color,
+        currency,
       }),
     });
     const body = await res.json().catch(() => ({}));
@@ -175,6 +177,26 @@ export default function TripSettings({
             Every colour a trip can be given by where it goes is also one
             somebody can pick by hand, so a row of seven circles is really the
             seven regions — and nothing on screen said so. */}
+        <label className="block text-xs text-muted">
+          Currency
+          <input
+            className="input mt-1 w-28 uppercase"
+            maxLength={3}
+            placeholder="USD"
+            aria-label="Currency for this trip"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+          />
+        </label>
+        {/* One per trip, and why. Somebody pricing a week through the
+            eurozone and Switzerland has to pick one and estimate the rest —
+            which is what they were doing on paper, and better than a total
+            nobody can compute without exchange rates. */}
+        <p className="text-xs text-muted">
+          Everything priced on this trip is in this currency. A trip through
+          two of them means picking one and estimating the other.
+        </p>
+
         <p className="text-xs text-muted">
           Trips are coloured by region — {regionLabel("europe")} blue, {regionLabel("asia")} red,
           and so on — so the list reads as a map. Picking one here overrides that.

@@ -47,6 +47,10 @@ export type TripDTO = {
   /// path rather than the blob's own address: the blob is private and this
   /// route is the only way in.
   coverUrl: string | null;
+  /// ISO 4217. One per trip: a day priced in three currencies cannot be
+  /// totalled without exchange rates, and rates are a live feed, a cache and
+  /// an argument about which day's rate applied.
+  currency: string;
   /// ISO timestamp when the owner published it, or null while private.
   publishedAt: string | null;
   /// When the owner was asked whether to publish it and said no. Only the
@@ -83,6 +87,9 @@ export type ItineraryItemDTO = {
   /// Days later that a travel leg lands. 0 for everything that arrives the
   /// day it left, which is nearly everything.
   endDayOffset: number;
+  /// What it costs, in the trip currency's smallest unit. Null means nobody
+  /// has priced it, which is not the same as free.
+  costMinor: number | null;
   /// How long an ordinary stop takes, in minutes. Travel legs keep their
   /// clock times instead; nobody plans a museum to the quarter hour.
   minutes: number | null;

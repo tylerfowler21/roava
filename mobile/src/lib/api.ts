@@ -295,6 +295,15 @@ export type Person = {
 };
 
 /// Something to have before you go rather than somewhere to be while there.
+/// Something one person on a trip wants to do. Attributed, because an
+/// unattributed wish list is a suggestion box.
+export type TripWant = {
+  id: string;
+  label: string;
+  userId: string;
+  user: { name: string | null; username: string | null; image: string | null };
+};
+
 export type TripResource = {
   id: string;
   tripId: string;

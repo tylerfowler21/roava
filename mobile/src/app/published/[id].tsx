@@ -24,7 +24,7 @@ import { usePalette } from "@/lib/use-palette";
 import { dayLabel, formatDay } from "@/lib/dates";
 import { tripWhere } from "@/lib/trip-where";
 import { travelMode } from "@/lib/taxonomy";
-import { whoArrivesLabel } from "@/lib/travel-arrivals";
+import { whoArrivesLabel } from "@/lib/arrival-names";
 
 type Published = {
   trip: Trip;

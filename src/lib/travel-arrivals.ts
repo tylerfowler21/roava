@@ -1,5 +1,9 @@
 import { placeForViewer, toPublicPlace, type ArrivalPersonDTO, type PublicItemDTO } from "@/lib/types";
 
+/// The naming half is shared with the app and lives next door. Re-exported so
+/// nothing that imported it from here has to change.
+export { whoArrivesLabel } from "@/lib/arrival-names";
+
 export type { ArrivalPersonDTO };
 
 export const ARRIVAL_USER = {
@@ -27,16 +31,6 @@ export function serializeArrivals(arrivals: ArrivalRow[] | undefined | null): Ar
     image: a.user.image,
     username: a.user.username,
   }));
-}
-
-/// "Alex, Sam" — the line a day is scanned for when arrivals stagger.
-export function whoArrivesLabel(
-  arrivals: { name: string | null; username: string | null }[] | undefined | null,
-): string | null {
-  if (!arrivals?.length) return null;
-  return arrivals
-    .map((person) => person.name?.trim() || (person.username ? `@${person.username}` : "them"))
-    .join(", ");
 }
 
 export function uniqueUserIds(ids: string[]): string[] {

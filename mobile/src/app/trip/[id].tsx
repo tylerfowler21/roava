@@ -32,7 +32,7 @@ import { WIDE } from "@/lib/wide";
 import { type } from "@/lib/type";
 import TripMap, { openDirections } from "@/components/TripMap";
 import { travelMode } from "@/lib/taxonomy";
-import { whoArrivesLabel } from "@/lib/travel-arrivals";
+import { whoArrivesLabel } from "@/lib/arrival-names";
 import { isPacking } from "@/lib/resources";
 import { useAuth } from "@/lib/auth";
 import { dayLabel } from "@/lib/dates";
@@ -46,11 +46,13 @@ import {
   type Place,
   type Trip,
   type TripResource,
+  type TripWant,
   type TripDocument,
 } from "@/lib/api";
 import TripBookings from "@/components/TripBookings";
 import TripResources from "@/components/TripResources";
 import TripPacking from "@/components/TripPacking";
+import TripWants from "@/components/TripWants";
 import TripFiles from "@/components/TripFiles";
 import AddFromLink from "@/components/AddFromLink";
 import { BOOKING_BOOKED, BOOKING_NEEDED, outstanding } from "@/lib/bookings";
@@ -63,6 +65,7 @@ type TripResponse = {
   role: string;
   items: ItineraryItem[];
   resources: TripResource[];
+  wants: TripWant[];
   documents: TripDocument[];
 };
 
@@ -449,6 +452,17 @@ export default function TripScreen() {
 
           {view === "before" && (
             <>
+              {/* Before the checklists, because it is the question that comes
+                  first: what is this trip for, according to the people on
+                  it. */}
+              <TripWants
+                tripId={id}
+                wants={data.wants ?? []}
+                me={user?.id ?? null}
+                isOwner={data.role === "owner"}
+                onChanged={reload}
+              />
+
               {/* One table, two lists — split here so neither component has
                   to know the other exists. */}
               <TripResources

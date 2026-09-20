@@ -149,6 +149,10 @@ const itemFields = {
   /// Coerced from a date string, and nullable: a deadline can be taken off
   /// again once the thing is booked or turns out not to need one.
   bookBy: z.coerce.date().nullable().optional(),
+  /// Who is arriving on this travel leg. Empty is fine — tagging is optional,
+  /// and a solo trip never needs it. Ids must belong to the owner or an
+  /// accepted collaborator; the route checks that once the trip is known.
+  arrivalUserIds: z.array(z.string().trim().min(1).max(40)).max(40).optional(),
 };
 
 export const itemCreateSchema = z

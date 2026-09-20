@@ -9,11 +9,8 @@ import CopyTripButton from "@/components/CopyTripButton";
 import SharedTrip from "@/components/SharedTrip";
 import SignUpInvite from "@/components/SignUpInvite";
 import { getCurrentUser } from "@/lib/user";
-import {
-  toPublicPlace,
-  type PublicItemDTO,
-  type PublicTripDTO,
-} from "@/lib/types";
+import { type PublicTripDTO } from "@/lib/types";
+import { itemWithArrivalsInclude, toPublicItineraryItem } from "@/lib/travel-arrivals";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +24,7 @@ async function loadShared(token: string) {
           user: { select: { name: true, username: true } },
           items: {
             orderBy: [{ dayIndex: "asc" }, { position: "asc" }],
-            include: { place: true, toPlace: true },
+            include: itemWithArrivalsInclude,
           },
         },
       },
@@ -82,23 +79,7 @@ export default async function SharedTripPage({
     notes: share.trip.notes,
   };
 
-  const items: PublicItemDTO[] = share.trip.items.map((item) => ({
-    id: item.id,
-    kind: item.kind,
-    mode: item.mode,
-    title: item.title,
-    emoji: item.emoji,
-    notes: item.notes,
-    dayIndex: item.dayIndex,
-    startTime: item.startTime,
-    endTime: item.endTime,
-    endDayOffset: item.endDayOffset,
-    minutes: item.minutes,
-    category: item.category,
-    position: item.position,
-    place: item.place ? toPublicPlace(item.place) : null,
-    toPlace: item.toPlace ? toPublicPlace(item.toPlace) : null,
-  }));
+  const items = share.trip.items.map(toPublicItineraryItem);
 
   const viewer = await getCurrentUser();
   const author = share.trip.user?.username

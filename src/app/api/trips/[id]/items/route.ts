@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
-import { placeForViewer } from "@/lib/types";
 import { ownsCategory } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 import { unauthorized } from "@/lib/api";
 import { getCurrentUser } from "@/lib/user";
 import { tripAccess } from "@/lib/trip-access";
 import { firstIssue, itemCreateSchema } from "@/lib/validation";
+import {
+  itemWithArrivalsInclude,
+  serializeItineraryItem,
+  uniqueUserIds,
+  unknownArrivalUsers,
+} from "@/lib/travel-arrivals";
+import { acceptedTripUserIds } from "@/lib/trip-arrivals";
 
 export async function POST(
   request: Request,
@@ -31,7 +37,24 @@ export async function POST(
   if (parsed.data.category && !(await ownsCategory(access.trip.userId, parsed.data.category))) {
     return NextResponse.json({ error: "No such category" }, { status: 400 });
   }
-  const data = parsed.data;
+  const { arrivalUserIds, ...data } = parsed.data;
+  const arrivals = uniqueUserIds(arrivalUserIds ?? []);
+
+  if (arrivals.length > 0 && data.kind !== "travel") {
+    return NextResponse.json(
+      { error: "Who arrives is for a journey, not a stop" },
+      { status: 400 },
+    );
+  }
+  if (arrivals.length > 0) {
+    const allowed = await acceptedTripUserIds(tripId, access.trip.userId);
+    if (unknownArrivalUsers(arrivals, allowed).length > 0) {
+      return NextResponse.json(
+        { error: "Those people aren't on this trip" },
+        { status: 400 },
+      );
+    }
+  }
 
   // Everyone adds from their own library, so the places must belong to whoever
   // is asking — not to the trip's owner. A travel leg has two of them.
@@ -50,18 +73,17 @@ export async function POST(
   });
 
   const item = await prisma.itineraryItem.create({
-    data: { ...data, tripId, position: (last?.position ?? -1) + 1 },
-    include: { place: true, toPlace: true },
+    data: {
+      ...data,
+      tripId,
+      position: (last?.position ?? -1) + 1,
+      arrivals: arrivals.length ? { create: arrivals.map((userId) => ({ userId })) } : undefined,
+    },
+    include: itemWithArrivalsInclude,
   });
 
   return NextResponse.json(
-    {
-      item: {
-        ...item,
-        place: item.place ? placeForViewer(item.place, user.id) : null,
-        toPlace: item.toPlace ? placeForViewer(item.toPlace, user.id) : null,
-      },
-    },
+    { item: serializeItineraryItem(item, user.id) },
     { status: 201 },
   );
 }

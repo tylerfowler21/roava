@@ -5,7 +5,8 @@ import { getCurrentUser } from "@/lib/user";
 import { tripAccess } from "@/lib/trip-access";
 import { pinsByLabel, placesForDestinations } from "@/lib/trip-destinations";
 import { firstIssue, tripUpdateSchema } from "@/lib/validation";
-import { placeForViewer, serializeTrip } from "@/lib/types";
+import { serializeTrip } from "@/lib/types";
+import { itemWithArrivalsInclude, serializeItineraryItem } from "@/lib/travel-arrivals";
 
 /// One trip with its itinerary.
 ///
@@ -30,7 +31,7 @@ export async function GET(
     include: {
       items: {
         orderBy: [{ dayIndex: "asc" }, { position: "asc" }],
-        include: { place: true, toPlace: true },
+        include: itemWithArrivalsInclude,
       },
       resources: { orderBy: { position: "asc" } },
       documents: { orderBy: { createdAt: "desc" } },
@@ -51,13 +52,7 @@ export async function GET(
       itemId: d.itemId,
       createdAt: d.createdAt.toISOString(),
     })),
-    items: trip.items.map((item) => ({
-      ...item,
-      // A date crosses the wire as a string, like every other one here.
-      bookBy: item.bookBy?.toISOString() ?? null,
-      place: item.place ? placeForViewer(item.place, user.id) : null,
-      toPlace: item.toPlace ? placeForViewer(item.toPlace, user.id) : null,
-    })),
+    items: trip.items.map((item) => serializeItineraryItem(item, user.id)),
   });
 }
 

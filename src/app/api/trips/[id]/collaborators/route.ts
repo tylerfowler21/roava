@@ -12,6 +12,7 @@ const collaboratorUser = { select: { name: true, image: true, username: true } }
 function serialize(c: {
   email: string;
   role: string;
+  userId: string | null;
   acceptedAt: Date | null;
   user: { name: string | null; image: string | null; username: string | null } | null;
 }) {
@@ -19,6 +20,9 @@ function serialize(c: {
     email: c.email,
     role: c.role,
     accepted: c.acceptedAt !== null,
+    // Needed to tag who arrives on a travel leg. Null until the invitation
+    // is bound to an account.
+    userId: c.userId,
     name: c.user?.name ?? null,
     image: c.user?.image ?? null,
     // Public handle, for matching people you follow without seeing their email.
@@ -52,7 +56,7 @@ export async function GET(
   // list. Name and picture only — the owner's address is not the caller's.
   const owner = await prisma.user.findUnique({
     where: { id: access.trip.userId },
-    select: { name: true, username: true, image: true },
+    select: { id: true, name: true, username: true, image: true },
   });
 
   return NextResponse.json({
@@ -195,6 +199,16 @@ export async function DELETE(
     return NextResponse.json({ error: "Only the trip owner can remove people" }, { status: 403 });
   }
 
+  const existing = await prisma.tripCollaborator.findFirst({
+    where: { tripId: id, email },
+    select: { userId: true },
+  });
   await prisma.tripCollaborator.deleteMany({ where: { tripId: id, email } });
+  // A person taken off the trip should not keep landing on its flights.
+  if (existing?.userId) {
+    await prisma.travelArrival.deleteMany({
+      where: { userId: existing.userId, item: { tripId: id } },
+    });
+  }
   return NextResponse.json({ ok: true });
 }

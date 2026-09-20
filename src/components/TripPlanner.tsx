@@ -54,6 +54,8 @@ import DirectionsIcon from "@/components/DirectionsIcon";
 import PublishPrompt from "@/components/PublishPrompt";
 import type { TripRole } from "@/lib/trip-access";
 import type { Collaborator } from "@/components/TripPeople";
+import WhoArrives, { type PartyPerson } from "@/components/WhoArrives";
+import { whoArrivesLabel } from "@/lib/travel-arrivals";
 import {
   DOCUMENT_TYPE_ERROR,
   MAX_DOCUMENT_BYTES,
@@ -69,6 +71,8 @@ export default function TripPlanner({
   initialItems,
   places,
   role,
+  ownerId,
+  viewerId,
   ownerLabel,
   ownerImage,
   people,
@@ -83,6 +87,8 @@ export default function TripPlanner({
   resources: TripResourceDTO[];
   documents: TripDocumentDTO[];
   role: TripRole;
+  ownerId: string;
+  viewerId: string;
   ownerLabel: string;
   ownerImage: string | null;
   people: Collaborator[];
@@ -138,6 +144,25 @@ export default function TripPlanner({
   /// read in two places — attached to a stop, and gathered on its own tab —
   /// and uploading in one must show in the other without a reload.
   const [files, setFiles] = useState(documents);
+
+  const party = useMemo<PartyPerson[]>(() => {
+    const you = (id: string, fallback: string) => (id === viewerId ? "You" : fallback);
+    const list: PartyPerson[] = [
+      { userId: ownerId, name: you(ownerId, ownerLabel), image: ownerImage },
+    ];
+    for (const person of people) {
+      if (!person.accepted || !person.userId || person.userId === ownerId) continue;
+      list.push({
+        userId: person.userId,
+        name: you(
+          person.userId,
+          person.name ?? (person.username ? `@${person.username}` : person.email),
+        ),
+        image: person.image,
+      });
+    }
+    return list;
+  }, [ownerId, ownerLabel, ownerImage, viewerId, people]);
 
   const days = dayCount(trip, items) + extraDays;
   const dayItems = useMemo(
@@ -319,6 +344,9 @@ export default function TripPlanner({
     mode?: string;
     startTime?: string | null;
     endTime?: string | null;
+    minutes?: number | null;
+    endDayOffset?: number;
+    arrivalUserIds?: string[];
   }) {
     return mutate<{ item: ItineraryItemDTO }>(
       () =>
@@ -666,7 +694,10 @@ export default function TripPlanner({
     setLibrary((prev) => prev.map((p) => (p.id === body.place.id ? body.place : p)));
   }
 
-  function patchItem(id: string, changes: Partial<ItineraryItemDTO>) {
+  function patchItem(
+    id: string,
+    changes: Partial<ItineraryItemDTO> & { arrivalUserIds?: string[] },
+  ) {
     return mutate<{ item: ItineraryItemDTO }>(
       () =>
         fetch(`/api/items/${id}`, {
@@ -1037,13 +1068,17 @@ export default function TripPlanner({
               morning it lands is a real part of this day and the one thing on
               it that cannot move. Shown here rather than moved, because the
               journey itself still belongs to the day it started. */}
-          {arrivalsToday.map((leg) => (
+          {arrivalsToday.map((leg) => {
+            const who = whoArrivesLabel(leg.arrivals);
+            return (
             <p key={`arrives-${leg.id}`} className="mt-2 text-xs text-accent-text">
               ✈️ Lands {leg.endTime}
               {leg.toPlace ? ` · ${leg.toPlace.name}` : ""}
+              {who ? ` — ${who}` : ""}
               <span className="text-muted"> — {leg.title}</span>
             </p>
-          ))}
+            );
+          })}
 
           {dayItems.length === 0 && arrivalsToday.length === 0 ? (
             <>
@@ -1068,6 +1103,7 @@ export default function TripPlanner({
                 const timed = dayItems.some((i) => timingLabel(i));
                 const open = selectedId === item.id;
                 const leg = item.kind === "travel";
+                const arriving = whoArrivesLabel(item.arrivals);
                 /// The details are open when somebody opened them, and already
                 /// open when this stop uses one of the things inside — a
                 /// setting nobody can see is worse than a busy card.
@@ -1154,6 +1190,7 @@ export default function TripPlanner({
                               {item.endTime && item.endDayOffset > 0
                                 ? ` · lands +${item.endDayOffset}`
                                 : ""}
+                              {arriving ? ` · ${arriving}` : ""}
                             </>
                           ) : (
                             <>
@@ -1373,6 +1410,13 @@ export default function TripPlanner({
                             if (next !== item.notes) patchItem(item.id, { notes: next });
                           }}
                         />
+                        {leg && (
+                          <WhoArrives
+                            people={party}
+                            selectedIds={(item.arrivals ?? []).map((p) => p.userId)}
+                            onChange={(ids) => patchItem(item.id, { arrivalUserIds: ids })}
+                          />
+                        )}
                         {/* The category, the files and whether it needs
                             booking. All three matter and none is asked on most
                             stops — a place brings its own category, and the
@@ -1579,6 +1623,7 @@ export default function TripPlanner({
 
         <AddTravel
           places={library}
+          party={party}
           onAdd={addItem}
           region={searchRegion}
           onSaveNew={async (r) => {
@@ -1756,12 +1801,15 @@ export default function TripPlanner({
 /// a stop: two ends, a departure and an arrival.
 function AddTravel({
   places,
+  party,
   onAdd,
   onSaveNew,
   region,
   busy,
 }: {
   places: PlaceDTO[];
+  /// Who can be tagged as arriving. Empty or a single person hides the picker.
+  party: PartyPerson[];
   /// Saves a place found by searching and hands back its id, so a journey can
   /// start or end somewhere that was never in the library.
   onSaveNew: (result: SearchResult) => Promise<string | null>;
@@ -1777,6 +1825,7 @@ function AddTravel({
     endTime?: string | null;
     minutes?: number | null;
     endDayOffset?: number;
+    arrivalUserIds?: string[];
   }) => Promise<boolean>;
   busy: boolean;
 }) {
@@ -1791,6 +1840,7 @@ function AddTravel({
   /// Days later it lands. Offered as a tick rather than a number because the
   /// only case anybody meets is the overnight one.
   const [nextDay, setNextDay] = useState(false);
+  const [arrivalUserIds, setArrivalUserIds] = useState<string[]>([]);
 
   const from = places.find((p) => p.id === fromId);
   const to = places.find((p) => p.id === toId);
@@ -1926,6 +1976,13 @@ function AddTravel({
         </label>
       )}
 
+      <WhoArrives
+        people={party}
+        selectedIds={arrivalUserIds}
+        onChange={setArrivalUserIds}
+        disabled={busy}
+      />
+
       {places.length < 2 && (
         <p className="text-xs text-amber-600 dark:text-amber-400">
           You need two saved places to travel between. Add them above first.
@@ -1954,6 +2011,7 @@ function AddTravel({
             endTime: arrives || null,
             minutes: mode === "plane" ? null : parseDuration(length),
             endDayOffset: nextDay ? 1 : 0,
+            arrivalUserIds,
           });
           if (ok) {
             setOpen(false);
@@ -1963,6 +2021,7 @@ function AddTravel({
             setArrives("");
             setLength("");
             setNextDay(false);
+            setArrivalUserIds([]);
           }
         }}
       >

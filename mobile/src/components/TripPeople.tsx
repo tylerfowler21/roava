@@ -33,12 +33,13 @@ type Collaborator = {
   email: string;
   role: string;
   accepted: boolean;
+  userId: string | null;
   name: string | null;
   image: string | null;
   username: string | null;
 };
 
-type Owner = { name: string | null; username: string | null; image: string | null } | null;
+type Owner = { id?: string; name: string | null; username: string | null; image: string | null } | null;
 type People = { role: string; owner: Owner; collaborators: Collaborator[] };
 
 /// Enough of an address to be worth sending to. The server checks it properly;

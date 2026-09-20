@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { geocode } from "@/lib/geocode";
 import { BUILT_IN_CATEGORY_IDS, TRAVEL_MODE_IDS } from "@/lib/taxonomy";
 import { dayAfter } from "@/lib/trip-calendar";
+import { whoArrivesLabel } from "@/lib/travel-arrivals";
 
 /// Otto, who fills a day.
 ///
@@ -109,6 +110,7 @@ function describeDay(
     mode: string | null;
     place: { name: string; city: string | null; lat: number; lng: number } | null;
     toPlace: { name: string; city: string | null } | null;
+    arrivals?: { user: { name: string | null; username: string | null } }[];
   }[],
 ) {
   if (items.length === 0) return `${label}${date ? ` (${date})` : ""}: empty`;
@@ -116,7 +118,8 @@ function describeDay(
   const lines = items.map((item) => {
     const when = item.startTime ?? "any time";
     if (item.kind === "travel") {
-      return `  ${when} — ${item.place?.name ?? "?"} → ${item.toPlace?.name ?? "?"} by ${item.mode ?? "?"}`;
+      const who = whoArrivesLabel(item.arrivals?.map((a) => a.user));
+      return `  ${when} — ${item.place?.name ?? "?"} → ${item.toPlace?.name ?? "?"} by ${item.mode ?? "?"}${who ? ` (${who})` : ""}`;
     }
     const where = item.place
       ? `${item.place.name}${item.place.city ? `, ${item.place.city}` : ""} (${item.place.lat.toFixed(4)},${item.place.lng.toFixed(4)})`
@@ -159,6 +162,7 @@ export async function runOtto(input: {
       dayIndex: true,
       place: { select: { name: true, city: true, lat: true, lng: true } },
       toPlace: { select: { name: true, city: true } },
+      arrivals: { select: { user: { select: { name: true, username: true } } } },
     },
   });
 

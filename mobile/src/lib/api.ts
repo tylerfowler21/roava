@@ -348,6 +348,8 @@ export type ItineraryItem = {
   /// What it costs, in the trip currency's smallest unit. Null means nobody
   /// has priced it, which is not the same as free.
   costMinor: number | null;
+  /// Whether that price is per person or for the whole party.
+  costEach: boolean;
   /// How long an ordinary stop takes, in minutes. Journeys keep clock times.
   minutes: number | null;
   category: string;
@@ -405,6 +407,8 @@ export type Trip = {
   startDate: string | null;
   endDate: string | null;
   color: string;
+  /// How many people are going, counting heads rather than accounts.
+  headcount: number | null;
   /// ISO 4217, for everything priced on this trip.
   currency: string;
   publishedAt: string | null;

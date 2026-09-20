@@ -32,7 +32,7 @@ import TripResources from "@/components/TripResources";
 import TripPacking from "@/components/TripPacking";
 import TripWants from "@/components/TripWants";
 import CostField from "@/components/CostField";
-import { anyPriced, formatMoney, totalOf } from "@/lib/money";
+import { anyPriced, formatMoney, perPerson, totalOf } from "@/lib/money";
 import TripFiles from "@/components/TripFiles";
 import AddFromLink from "@/components/AddFromLink";
 import AskOtto from "@/components/AskOtto";
@@ -936,7 +936,18 @@ export default function TripPlanner({
               // priced, and deliberately not called a budget: it is the sum
               // of what has been written down, which on a half-planned trip
               // is a floor rather than an estimate.
-              anyPriced(items) ? formatMoney(totalOf(items), trip.currency) : null,
+              anyPriced(items)
+                ? formatMoney(totalOf(items, trip.headcount ?? 1), trip.currency)
+                : null,
+              // What it comes to each, which is the number everybody on a
+              // group trip is actually doing in their head. Only when there
+              // is a head count and more than one of them.
+              anyPriced(items) && (trip.headcount ?? 0) > 1
+                ? `${formatMoney(
+                    perPerson(totalOf(items, trip.headcount ?? 1), trip.headcount ?? 1),
+                    trip.currency,
+                  )} each`
+                : null,
             ]
               .filter(Boolean)
               .join(" · ")}
@@ -1059,7 +1070,9 @@ export default function TripPlanner({
                 // Only when somebody has priced something. A day of unpriced
                 // stops showing a confident zero is worse than showing
                 // nothing.
-                anyPriced(dayItems) ? formatMoney(totalOf(dayItems), trip.currency) : null,
+                anyPriced(dayItems)
+                  ? formatMoney(totalOf(dayItems, trip.headcount ?? 1), trip.currency)
+                  : null,
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -1309,8 +1322,9 @@ export default function TripPlanner({
                       )}
                       <CostField
                         costMinor={item.costMinor}
+                        costEach={item.costEach}
                         currency={trip.currency}
-                        onSave={(costMinor) => patchItem(item.id, { costMinor })}
+                        onSave={(changes) => patchItem(item.id, changes)}
                       />
                       <select
                         aria-label="Move to day"

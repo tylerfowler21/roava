@@ -15,12 +15,14 @@ import { formatMoney, parseMoney, toMajorString } from "@/lib/money";
 /// digit they were halfway through.
 export default function CostField({
   costMinor,
+  costEach,
   currency,
   onSave,
 }: {
   costMinor: number | null;
+  costEach: boolean;
   currency: string;
-  onSave: (costMinor: number | null) => void;
+  onSave: (changes: { costMinor?: number | null; costEach?: boolean }) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState("");
@@ -31,11 +33,12 @@ export default function CostField({
     // An emptied box means "unpriced", which is not the same as free — so it
     // saves null rather than zero.
     const next = trimmed === "" ? null : parseMoney(trimmed, currency);
-    if (next !== costMinor) onSave(next);
+    if (next !== costMinor) onSave({ costMinor: next });
   }
 
   if (!editing) {
     return (
+      <span className="inline-flex items-center gap-1.5">
       <button
         type="button"
         onClick={() => {
@@ -46,7 +49,25 @@ export default function CostField({
         aria-label={costMinor === null ? "Add a cost" : "Change the cost"}
       >
         {costMinor === null ? "Cost?" : formatMoney(costMinor, currency)}
+        {costMinor !== null && costEach && (
+          <span className="ml-1 opacity-70">each</span>
+        )}
       </button>
+
+      {/* The question everybody asks about a price on a group trip, next to
+          the price rather than buried in an editor. Only once there is one:
+          "each or total" is meaningless about a blank. */}
+      {costMinor !== null && (
+        <button
+          type="button"
+          onClick={() => onSave({ costEach: !costEach })}
+          className="text-xs text-muted hover:underline"
+          title={costEach ? "Counted once per person" : "Counted once for everybody"}
+        >
+          {costEach ? "per person" : "total"}
+        </button>
+      )}
+    </span>
     );
   }
 

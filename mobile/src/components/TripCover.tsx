@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { API_URL, api, upload, type ItineraryItem, type Trip, filePart } from "@/lib/api";
 import { useAuthHeaders } from "@/lib/use-auth-headers";
 import { type } from "@/lib/type";
-import { anyPriced, formatMoney, totalOf } from "@/lib/money";
+import { anyPriced, formatMoney, perPerson, totalOf } from "@/lib/money";
 import { formatDay } from "@/lib/dates";
 
 const HEIGHT = 300;
@@ -191,7 +191,17 @@ export default function TripCover({
             // What the plan adds up to so far. Only once something is priced,
             // and deliberately not called a budget: it is the sum of what has
             // been written down, which on a half-planned trip is a floor.
-            anyPriced(items) ? formatMoney(totalOf(items), trip.currency) : null,
+            anyPriced(items)
+              ? formatMoney(totalOf(items, trip.headcount ?? 1), trip.currency)
+              : null,
+            // What it comes to each, which is the number everybody on a group
+            // trip is doing in their head anyway.
+            anyPriced(items) && (trip.headcount ?? 0) > 1
+              ? `${formatMoney(
+                  perPerson(totalOf(items, trip.headcount ?? 1), trip.headcount ?? 1),
+                  trip.currency,
+                )} each`
+              : null,
           ]
             .filter(Boolean)
             .join(" · ")}

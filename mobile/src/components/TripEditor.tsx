@@ -56,6 +56,7 @@ export default function TripEditor({
   const [end, setEnd] = useState(trip?.endDate?.slice(0, 10) ?? "");
   const [color, setColor] = useState(trip?.color ?? TRIP_COLORS[0]);
   const [currency, setCurrency] = useState(trip?.currency ?? "USD");
+  const [heads, setHeads] = useState(trip?.headcount?.toString() ?? "");
   const [published, setPublished] = useState(Boolean(trip?.publishedAt));
   const [busy, setBusy] = useState(false);
 
@@ -83,6 +84,7 @@ export default function TripEditor({
         endDate: end || null,
         color,
         currency,
+        headcount: heads.trim() ? Number(heads) : null,
         ...(editing ? { published } : {}),
       };
       const saved = await api<{ trip: Trip }>(
@@ -236,6 +238,24 @@ export default function TripEditor({
               />
             ))}
           </View>
+          <Text style={[styles.label, { color: palette.muted }]}>
+            How many people are going
+          </Text>
+          <TextInput
+            value={heads}
+            onChangeText={(next) => setHeads(next.replace(/[^\d]/g, "").slice(0, 3))}
+            keyboardType="number-pad"
+            placeholder="19"
+            placeholderTextColor={palette.muted}
+            style={[styles.input, { borderColor: palette.border, color: palette.ink }]}
+          />
+          {/* Heads rather than accounts: five families is five people who can
+              log in and nineteen who need tickets, and it is the nineteen a
+              per-person price multiplies by. */}
+          <Text style={[styles.hint, { color: palette.muted }]}>
+            Everybody, not just the people with accounts.
+          </Text>
+
           <Text style={[styles.label, { color: palette.muted }]}>Currency</Text>
           <TextInput
             value={currency}

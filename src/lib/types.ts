@@ -47,6 +47,8 @@ export type TripDTO = {
   /// path rather than the blob's own address: the blob is private and this
   /// route is the only way in.
   coverUrl: string | null;
+  /// How many people are going, counting heads rather than accounts.
+  headcount: number | null;
   /// ISO 4217. One per trip: a day priced in three currencies cannot be
   /// totalled without exchange rates, and rates are a live feed, a cache and
   /// an argument about which day's rate applied.
@@ -90,6 +92,8 @@ export type ItineraryItemDTO = {
   /// What it costs, in the trip currency's smallest unit. Null means nobody
   /// has priced it, which is not the same as free.
   costMinor: number | null;
+  /// Whether that price is per person or for the whole party.
+  costEach: boolean;
   /// How long an ordinary stop takes, in minutes. Travel legs keep their
   /// clock times instead; nobody plans a museum to the quarter hour.
   minutes: number | null;

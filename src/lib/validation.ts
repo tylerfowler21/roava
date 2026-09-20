@@ -75,6 +75,8 @@ const tripFields = {
   endDate: z.coerce.date().nullable().optional(),
   notes: optionalText(2000),
   color: trimmed(9).regex(/^#[0-9a-fA-F]{6}$/, "Expected a hex colour"),
+  /// How many people are going. Null clears it back to "nobody has said".
+  headcount: z.number().int().min(1).max(200).nullable().optional(),
   /// ISO 4217, upper-cased. Three letters checked here and nothing more: the
   /// list of valid codes lives in the platform's own data, and a hand-kept
   /// copy would be wrong the first time a currency changed.
@@ -146,6 +148,7 @@ const itemFields = {
   /// the currency decides how many decimal places a number has and the client
   /// is where the currency is already known.
   costMinor: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  costEach: z.boolean().optional(),
   // A stop, not a schedule: minutes, capped at a day.
   minutes: z.number().int().min(5).max(1440).nullable(),
   placeId: optionalText(40),
@@ -179,6 +182,7 @@ export const itemCreateSchema = z
     // Same day unless somebody says otherwise, which is nearly always.
     endDayOffset: z.number().int().min(0).max(3).default(0),
   costMinor: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  costEach: z.boolean().optional(),
     minutes: z.number().int().min(5).max(1440).nullable().default(null),
   });
 

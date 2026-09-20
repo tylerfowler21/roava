@@ -281,6 +281,13 @@ model Trip {
   notes       String?
   /// Hex colour used for this trip's pins and accents
   color       String    @default("#0F2D4A")
+  /// How many people are going, counting everybody rather than accounts.
+  ///
+  /// Five families on a trip is five collaborators and nineteen heads, and it
+  /// is heads that tickets are sold to. Null means nobody has said — in which
+  /// case a per-head price counts once, which is obviously provisional rather
+  /// than invented.
+  headcount   Int?
   /// ISO 4217, for everything priced on this trip.
   ///
   /// One per trip rather than one per item. A day whose costs are in three
@@ -437,6 +444,13 @@ model ItineraryItem {
   /// Null is "nobody has priced this", which is not the same as free. A day
   /// of unpriced stops shows no total rather than a confident zero.
   costMinor Int?
+  /// Whether that price is per person or for the whole party.
+  ///
+  /// The first question anybody asks about a price on a group trip, and not a
+  /// rounding error to get wrong: nineteen people and a $120 ticket is $120
+  /// or $2,280 depending on the answer. Tickets and meals are each; a villa
+  /// is not.
+  costEach  Boolean @default(false)
   /// "stop" or "travel"
   kind      String   @default("stop")
   placeId   String?

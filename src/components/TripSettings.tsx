@@ -31,6 +31,7 @@ export default function TripSettings({
   const [endDate, setEndDate] = useState(toDateInput(trip.endDate));
   const [color, setColor] = useState(trip.color);
   const [currency, setCurrency] = useState(trip.currency);
+  const [headcount, setHeadcount] = useState(trip.headcount?.toString() ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Deleting a whole itinerary deserves a second click, not a browser dialog.
@@ -87,6 +88,7 @@ export default function TripSettings({
         endDate: endDate || null,
         color,
         currency,
+        headcount: headcount.trim() ? Number(headcount) : null,
       }),
     });
     const body = await res.json().catch(() => ({}));
@@ -177,6 +179,25 @@ export default function TripSettings({
             Every colour a trip can be given by where it goes is also one
             somebody can pick by hand, so a row of seven circles is really the
             seven regions — and nothing on screen said so. */}
+        <label className="block text-xs text-muted">
+          How many people are going
+          <input
+            className="input mt-1 w-28"
+            inputMode="numeric"
+            placeholder="19"
+            aria-label="How many people are going"
+            value={headcount}
+            onChange={(e) => setHeadcount(e.target.value.replace(/[^\d]/g, ""))}
+          />
+        </label>
+        {/* Heads rather than accounts: five families on a trip is five
+            people who can log in and nineteen who need tickets, and it is
+            the nineteen that a per-person price multiplies by. */}
+        <p className="text-xs text-muted">
+          Everybody, not just the people with accounts — it is what a
+          per-person price is multiplied by.
+        </p>
+
         <label className="block text-xs text-muted">
           Currency
           <input

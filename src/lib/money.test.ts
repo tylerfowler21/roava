@@ -1,6 +1,14 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
-import { formatMoney, minorUnits, parseMoney, toMajorString, totalOf, anyPriced } from "./money";
+import {
+  anyPriced,
+  formatMoney,
+  minorUnits,
+  parseMoney,
+  perPerson,
+  toMajorString,
+  totalOf,
+} from "./money";
 
 test("a currency with no subunit has no decimal places", () => {
   assert.equal(minorUnits("JPY"), 0);
@@ -51,4 +59,29 @@ test("what is typed survives a round trip", () => {
     const minor = parseMoney(text, currency)!;
     assert.equal(parseMoney(toMajorString(minor, currency), currency), minor);
   }
+});
+
+test("a per-head price is multiplied and a whole-thing price is not", () => {
+  const items = [
+    { costMinor: 12000, costEach: true },  // tickets, each
+    { costMinor: 300000, costEach: false }, // the villa, once
+  ];
+  // Nineteen people: 19 x $120 + $3000.
+  assert.equal(totalOf(items, 19), 12000 * 19 + 300000);
+});
+
+test("with no head count a per-head price counts once", () => {
+  assert.equal(totalOf([{ costMinor: 12000, costEach: true }]), 12000);
+});
+
+test("a head count below one cannot shrink or invert a total", () => {
+  const items = [{ costMinor: 5000, costEach: true }];
+  assert.equal(totalOf(items, 0), 5000);
+  assert.equal(totalOf(items, -3), 5000);
+});
+
+test("a share is rounded to the nearest unit", () => {
+  assert.equal(perPerson(240100, 5), 48020);
+  assert.equal(perPerson(1000, 3), 333);
+  assert.equal(perPerson(1000, 0), 1000);
 });

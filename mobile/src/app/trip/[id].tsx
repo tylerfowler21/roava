@@ -562,7 +562,10 @@ export default function TripScreen() {
                         // unpriced stops showing a confident zero is worse
                         // than showing nothing.
                         anyPriced(stops)
-                          ? formatMoney(totalOf(stops), data.trip.currency)
+                          ? formatMoney(
+                              totalOf(stops, data.trip.headcount ?? 1),
+                              data.trip.currency,
+                            )
                           : null,
                       ]
                         .filter(Boolean)

@@ -86,10 +86,43 @@ export function toMajorString(minor: number, currency: string): string {
   return Number.isInteger(major) ? String(major) : major.toFixed(places);
 }
 
-/// What a set of things costs. Anything without a price is not counted, and
-/// is not the same as something that costs nothing.
-export function totalOf(items: { costMinor: number | null }[]): number {
-  return items.reduce((sum, item) => sum + (item.costMinor ?? 0), 0);
+/// A priced thing, and whether the price is for one person or for everybody.
+export type Priced = {
+  costMinor: number | null;
+  /// True when the number typed was per head — a ticket, a meal — and false
+  /// when it was the whole thing, like a villa nobody pays for twice.
+  costEach?: boolean;
+};
+
+/// What a set of things costs, for the whole party.
+///
+/// The question anybody asks first about a price on a group trip is "each or
+/// total", and getting it wrong is not a rounding error: five families and
+/// $120 tickets is $120 or $2,280 depending on the answer. So a per-head
+/// price is multiplied by the head count and a whole-thing price is not.
+///
+/// With no head count recorded, a per-head price counts once. That is the
+/// honest reading of "we have not said how many of us there are" — better a
+/// total that is too low and obviously provisional than one invented from a
+/// number nobody gave.
+export function totalOf(items: Priced[], heads = 1): number {
+  const party = Math.max(1, Math.floor(heads));
+  return items.reduce((sum, item) => {
+    if (item.costMinor === null || item.costMinor === undefined) return sum;
+    return sum + (item.costEach ? item.costMinor * party : item.costMinor);
+  }, 0);
+}
+
+/// What one person's share comes to, rounded to the nearest whole unit of the
+/// currency.
+///
+/// Approximate on purpose, and only worth showing beside the total it came
+/// from. Dividing £2,401 five ways leaves a penny that has to land on
+/// somebody, and deciding who is settling up — a different feature, and a
+/// much larger one.
+export function perPerson(total: number, heads: number): number {
+  const party = Math.max(1, Math.floor(heads));
+  return Math.round(total / party);
 }
 
 /// Whether it is worth showing a total at all. A trip where nobody has priced

@@ -231,6 +231,9 @@ export default function ItemEditor({
   const [costText, setCostText] = useState(
     existing?.costMinor != null ? toMajorString(existing.costMinor, currency) : "",
   );
+  /// Each or total — the first question anybody asks about a price on a group
+  /// trip, and not a rounding error to get wrong.
+  const [costEach, setCostEach] = useState(Boolean(existing?.costEach));
   const [showMore, setShowMore] = useState(
     Boolean(existing?.emoji || existing?.booking || existing?.bookingRef),
   );
@@ -453,6 +456,7 @@ export default function ItemEditor({
         // An emptied box means "nobody has priced this", which is not the
         // same as free — so it saves null rather than zero.
         costMinor: costText.trim() ? parseMoney(costText, currency) : null,
+        costEach,
         mode: travel ? travelMode : null,
         placeId,
         toPlaceId: travel ? toPlaceId : null,
@@ -989,6 +993,41 @@ export default function ItemEditor({
             style={[styles.input, field]}
           />
 
+          {/* Only once there is a price: "each or total" is meaningless about
+              a blank. Two buttons rather than a switch, because a switch has
+              to be labelled with one of the two answers and then reads as the
+              other one being off. */}
+          {costText.trim() !== "" && (
+            <View style={styles.eachRow}>
+              {([
+                [false, "Total"],
+                [true, "Per person"],
+              ] as const).map(([value, label]) => (
+                <Pressable
+                  key={label}
+                  onPress={() => setCostEach(value)}
+                  style={[
+                    styles.eachChip,
+                    { borderColor: palette.border },
+                    costEach === value && {
+                      backgroundColor: palette.primary,
+                      borderColor: palette.primary,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      color: costEach === value ? palette.onPrimary : palette.ink,
+                      fontSize: 13,
+                    }}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+
           <Text style={[styles.label, { color: palette.muted }]}>
             {existing?.place?.notes ? "Notes for this stop" : "Notes"}
           </Text>
@@ -1158,6 +1197,8 @@ export default function ItemEditor({
 }
 
 const styles = StyleSheet.create({
+  eachRow: { flexDirection: "row", gap: 8, marginTop: -4, marginBottom: 6 },
+  eachChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
   header: {
     flexDirection: "row",
     alignItems: "center",

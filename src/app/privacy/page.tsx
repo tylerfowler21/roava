@@ -56,6 +56,20 @@ export default function PrivacyPage() {
             old one immediately.
           </li>
           <li>
+            <span className="text-foreground">
+              Showing where you have been to your followers
+            </span>{" "}
+            is a setting, off until you turn it on. With it on, the places you
+            have marked <span className="text-foreground">been there</span>{" "}
+            appear on the map of anyone who follows you, with your name, your
+            note and your rating on each — which is the point, since a place
+            with nothing said about it is worth little to somebody standing in
+            front of it. It never includes anywhere you marked{" "}
+            <span className="text-foreground">lived there</span>, never your
+            want-to-go list, and never journal entries. Turning it off removes
+            them from other people&apos;s maps.
+          </li>
+          <li>
             <span className="text-foreground">Journal entries and photos are
             always private.</span> Publishing a trip does not publish them.
             Photos are stored so that they cannot be read by their URL — only

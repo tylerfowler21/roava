@@ -87,6 +87,18 @@ export type ItineraryItemDTO = {
   bookBy: string | null;
   place: PlaceDTO | null;
   toPlace: PlaceDTO | null;
+  /// Who is landing on this travel leg. Empty for stops, solo trips, and
+  /// legs nobody has tagged — tagging is optional.
+  arrivals: ArrivalPersonDTO[];
+};
+
+/// A person tagged as arriving on a travel leg. Name and picture only: the
+/// itinerary is not the place to show invitation emails.
+export type ArrivalPersonDTO = {
+  userId: string;
+  name: string | null;
+  image: string | null;
+  username: string | null;
 };
 
 /// A file belonging to a trip — a confirmation, a ticket, an emailed
@@ -258,6 +270,10 @@ export type PublicItemDTO = {
   position: number;
   place: PublicPlaceDTO | null;
   toPlace: PublicPlaceDTO | null;
+  /// Who lands on this leg, when the owner tagged them. Names rather than
+  /// emails — a shared itinerary is often sent to the same people who are on
+  /// the flights.
+  arrivals: ArrivalPersonDTO[];
 };
 
 export type PublicTripDTO = {

@@ -10,6 +10,7 @@ import { category as resolve, stopIcon, travelMode, type Category } from "@/lib/
 import { dateForDay, dayCount, durationLabel, formatDay, formatRange } from "@/lib/trips";
 import { directionsUrl } from "@/lib/directions";
 import type { PublicItemDTO, PublicTripDTO } from "@/lib/types";
+import { whoArrivesLabel } from "@/lib/travel-arrivals";
 
 /// How many days show before "Show all" — enough to read the shape of a
 /// trip, not so many that a fortnight is a wall.
@@ -279,6 +280,7 @@ export default function SharedTrip({
                                   durationLabel(item),
                                   item.place && item.toPlace ? `${item.place.name} → ${item.toPlace.name}` : item.title,
                                   item.startTime ? `${item.startTime}${item.endTime ? `–${item.endTime}` : ""}${item.endDayOffset > 0 ? ` +${item.endDayOffset}` : ""}` : null,
+                                  whoArrivesLabel(item.arrivals),
                                 ]
                                   .filter(Boolean)
                                   .join(" · ")}

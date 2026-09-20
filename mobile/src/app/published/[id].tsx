@@ -24,6 +24,7 @@ import { usePalette } from "@/lib/use-palette";
 import { dayLabel, formatDay } from "@/lib/dates";
 import { tripWhere } from "@/lib/trip-where";
 import { travelMode } from "@/lib/taxonomy";
+import { whoArrivesLabel } from "@/lib/travel-arrivals";
 
 type Published = {
   trip: Trip;
@@ -136,6 +137,7 @@ export default function PublishedTripScreen() {
                 >
                   ✈️ Lands {leg.endTime}
                   {leg.toPlace ? ` · ${leg.toPlace.name}` : ""}
+                  {whoArrivesLabel(leg.arrivals) ? ` — ${whoArrivesLabel(leg.arrivals)}` : ""}
                 </Text>
               ))}
 
@@ -155,11 +157,16 @@ export default function PublishedTripScreen() {
                     <Text style={{ color: palette.ink, fontSize: 15 }} numberOfLines={2}>
                       {entry.title}
                     </Text>
-                    {timingLabel(entry) && (
+                    {(timingLabel(entry) || whoArrivesLabel(entry.arrivals)) && (
                       <Text style={{ color: palette.muted, fontSize: 12 }} numberOfLines={1}>
-                        {entry.kind === "travel" && (entry.endDayOffset ?? 0) > 0
-                          ? `${timingLabel(entry)} +${entry.endDayOffset}`
-                          : timingLabel(entry)}
+                        {[
+                          entry.kind === "travel" && (entry.endDayOffset ?? 0) > 0
+                            ? `${timingLabel(entry)} +${entry.endDayOffset}`
+                            : timingLabel(entry),
+                          whoArrivesLabel(entry.arrivals),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </Text>
                     )}
                     {/* Whole, and on a line of its own.

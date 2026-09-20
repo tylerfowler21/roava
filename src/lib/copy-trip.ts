@@ -11,6 +11,8 @@ const SAME_PLACE_DEGREES = 0.0005;
 /// across, but the dates do not — they were their dates — and the places land
 /// on your wishlist rather than being marked as somewhere you have been.
 /// Their notes and ratings on a place stay theirs; you get the location.
+/// Who was tagged as arriving on a flight stays behind too — those people
+/// are on their trip, not on this copy.
 ///
 /// Who is allowed to do this is the caller's business. A published trip is
 /// copyable by anyone who can see the profile; a shared one by anyone holding

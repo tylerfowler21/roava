@@ -351,6 +351,15 @@ export type ItineraryItem = {
   /// on the map it came from.
   place: ItemPlace | null;
   toPlace: ItemPlace | null;
+  /// Who is landing on this travel leg. Empty when nobody has been tagged.
+  arrivals?: ArrivalPerson[];
+};
+
+export type ArrivalPerson = {
+  userId: string;
+  name: string | null;
+  image: string | null;
+  username: string | null;
 };
 
 type ItemPlace = {

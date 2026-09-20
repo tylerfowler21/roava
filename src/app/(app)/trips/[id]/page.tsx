@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/user";
 import { tripAccess } from "@/lib/trip-access";
-import { placeForViewer, serializePlace, serializeTrip, type ItineraryItemDTO } from "@/lib/types";
+import { serializePlace, serializeTrip, type ItineraryItemDTO } from "@/lib/types";
+import { itemWithArrivalsInclude, serializeItineraryItem } from "@/lib/travel-arrivals";
 import TripPlanner from "@/components/TripPlanner";
 import { ottoAround } from "@/lib/admin";
 
@@ -24,7 +25,7 @@ export default async function TripPage({
     include: {
       items: {
         orderBy: [{ dayIndex: "asc" }, { position: "asc" }],
-        include: { place: true, toPlace: true },
+        include: itemWithArrivalsInclude,
       },
       resources: { orderBy: { position: "asc" } },
       documents: { orderBy: { createdAt: "desc" } },
@@ -34,7 +35,7 @@ export default async function TripPage({
   // Editors see whose trip they are helping with.
   const ownerRecord = await prisma.user.findUnique({
     where: { id: trip.userId },
-    select: { name: true, email: true, image: true },
+    select: { id: true, name: true, email: true, image: true },
   });
   const owner =
     access.role === "owner" ? "You" : (ownerRecord?.name ?? ownerRecord?.email ?? "Someone");
@@ -54,13 +55,9 @@ export default async function TripPage({
     orderBy: { name: "asc" },
   });
 
-  const items: ItineraryItemDTO[] = trip.items.map((item) => ({
-    ...item,
-    // A date crosses the wire as a string, like every other one here.
-    bookBy: item.bookBy?.toISOString() ?? null,
-    place: item.place ? placeForViewer(item.place, user.id) : null,
-    toPlace: item.toPlace ? placeForViewer(item.toPlace, user.id) : null,
-  }));
+  const items: ItineraryItemDTO[] = trip.items.map((item) =>
+    serializeItineraryItem(item, user.id),
+  );
 
   return (
     <TripPlanner
@@ -79,12 +76,15 @@ export default async function TripPage({
         createdAt: d.createdAt.toISOString(),
       }))}
       role={access.role}
+      ownerId={trip.userId}
+      viewerId={user.id}
       ownerLabel={owner}
       ownerImage={ownerRecord?.image ?? null}
       people={collaborators.map((c) => ({
         email: c.email,
         role: c.role,
         accepted: c.acceptedAt !== null,
+        userId: c.userId,
         name: c.user?.name ?? null,
         image: c.user?.image ?? null,
         username: c.user?.username ?? null,

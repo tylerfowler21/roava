@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SEMANTIC, RADIUS } from "@/lib/brand";
 import {
   DURATIONS,
@@ -41,6 +41,7 @@ import {
 import { TRAVEL_MODES } from "@/lib/taxonomy";
 import { usePalette } from "@/lib/use-palette";
 import { BOOKING_BOOKED, BOOKING_NEEDED, nextState } from "@/lib/bookings";
+import { useAuth } from "@/lib/auth";
 
 /// "09:30" — the shape the API stores and the website's time input produces.
 const TIME_HINT = "HH:MM";
@@ -203,6 +204,13 @@ export default function ItemEditor({
   const [placeId, setPlaceId] = useState(existing?.placeId ?? null);
   const [toPlaceId, setToPlaceId] = useState(existing?.toPlaceId ?? null);
   const [busy, setBusy] = useState(false);
+  const { user } = useAuth();
+  const tripId =
+    draft?.mode === "create" ? draft.tripId : existing?.tripId ?? null;
+  const [arrivalUserIds, setArrivalUserIds] = useState<string[]>(
+    (existing?.arrivals ?? []).map((p) => p.userId),
+  );
+  const [party, setParty] = useState<{ userId: string; name: string; image: string | null }[]>([]);
 
   /// The three things this screen folds away, and whether each is open.
   ///
@@ -225,6 +233,63 @@ export default function ItemEditor({
 
   /// Places created here, so they appear in the pickers without refetching.
   const [added, setAdded] = useState<Place[]>([]);
+
+  useEffect(() => {
+    if (kind !== "travel" || !tripId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const body = await api<{
+          role: string;
+          owner: { id: string; name: string | null; username: string | null; image: string | null } | null;
+          collaborators: {
+            userId: string | null;
+            accepted: boolean;
+            name: string | null;
+            username: string | null;
+            email: string;
+            image: string | null;
+          }[];
+        }>(`/api/trips/${tripId}/collaborators`);
+        if (cancelled) return;
+        const viewerId = user?.id;
+        const you = (id: string, fallback: string) => (id === viewerId ? "You" : fallback);
+        const ownerId = body.owner?.id;
+        if (!ownerId) {
+          setParty([]);
+          return;
+        }
+        const list: { userId: string; name: string; image: string | null }[] = [
+          {
+            userId: ownerId,
+            name: you(
+              ownerId,
+              body.owner?.name ??
+                (body.owner?.username ? `@${body.owner.username}` : "The owner"),
+            ),
+            image: body.owner?.image ?? null,
+          },
+        ];
+        for (const person of body.collaborators) {
+          if (!person.accepted || !person.userId || person.userId === ownerId) continue;
+          list.push({
+            userId: person.userId,
+            name: you(
+              person.userId,
+              person.name ?? (person.username ? `@${person.username}` : person.email),
+            ),
+            image: person.image,
+          });
+        }
+        setParty(list);
+      } catch {
+        // The picker simply stays hidden; the journey can still be saved.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [kind, tripId, user?.id]);
 
   /// The places worth offering as chips: the ones saved on this trip's
   /// travels, plus anything added here in this sitting.
@@ -385,6 +450,7 @@ export default function ItemEditor({
         // Clearing the booking clears what was booked with it; a reference to
         // a reservation nobody is making any more is just a stale number.
         ...(booking === null ? { bookingRef: null } : {}),
+        ...(travel ? { arrivalUserIds } : {}),
       };
       if (draft!.mode === "create") {
         await api(`/api/trips/${draft!.tripId}/items`, {
@@ -775,6 +841,39 @@ export default function ItemEditor({
                       Arrival is before departure — this probably lands the next day.
                     </Text>
                   )}
+                </>
+              )}
+
+              {party.length >= 2 && (
+                <>
+                  <Text style={[styles.label, { color: palette.muted }]}>Who&apos;s arriving</Text>
+                  <Text style={{ color: palette.muted, fontSize: 12, marginBottom: 6 }}>
+                    Optional — leave empty if it&apos;s everyone, or if it doesn&apos;t matter.
+                  </Text>
+                  <View style={styles.chips}>
+                    {party.map((person) => {
+                      const on = arrivalUserIds.includes(person.userId);
+                      return (
+                        <Pressable
+                          key={person.userId}
+                          onPress={() =>
+                            setArrivalUserIds((ids) =>
+                              on ? ids.filter((id) => id !== person.userId) : [...ids, person.userId],
+                            )
+                          }
+                          style={[
+                            styles.chip,
+                            { backgroundColor: palette.surface, borderColor: palette.border },
+                            on && { borderColor: palette.primary },
+                          ]}
+                        >
+                          <Text style={{ fontSize: 13, color: on ? palette.ink : palette.muted }}>
+                            {person.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </>
               )}
             </>

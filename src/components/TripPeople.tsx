@@ -8,6 +8,9 @@ export type Collaborator = {
   email: string;
   role: string;
   accepted: boolean;
+  /// Null until they have an account bound to the invitation. Tagging who
+  /// arrives on a flight needs this; pending invites cannot be tagged.
+  userId: string | null;
   name: string | null;
   image: string | null;
   username: string | null;
@@ -196,6 +199,7 @@ export default function TripPeople({
               email: ownerLabel,
               role: "owner",
               accepted: true,
+              userId: null,
               name: ownerLabel,
               image: ownerImage,
               username: null,

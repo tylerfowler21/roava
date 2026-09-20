@@ -32,6 +32,7 @@ import { WIDE } from "@/lib/wide";
 import { type } from "@/lib/type";
 import TripMap, { openDirections } from "@/components/TripMap";
 import { travelMode } from "@/lib/taxonomy";
+import { whoArrivesLabel } from "@/lib/travel-arrivals";
 import { isPacking } from "@/lib/resources";
 import { useAuth } from "@/lib/auth";
 import { dayLabel } from "@/lib/dates";
@@ -586,6 +587,7 @@ export default function TripScreen() {
                     >
                       ✈️ Lands {leg.endTime}
                       {leg.toPlace ? ` · ${leg.toPlace.name}` : ""}
+                      {whoArrivesLabel(leg.arrivals) ? ` — ${whoArrivesLabel(leg.arrivals)}` : ""}
                     </Text>
                   ))}
 
@@ -689,7 +691,10 @@ export default function TripScreen() {
                           <Text style={[styles.stopTitle, { color: palette.ink }]} numberOfLines={2}>
                             {entry.title}
                           </Text>
-                          {(timingLabel(entry) || entry.notes || entry.booking) && (
+                          {(timingLabel(entry) ||
+                            entry.notes ||
+                            entry.booking ||
+                            whoArrivesLabel(entry.arrivals)) && (
                             <Text style={[styles.stopMeta, { color: palette.muted }]} numberOfLines={1}>
                               {[
                                 // A journey reads as its times, a stop as how
@@ -698,6 +703,7 @@ export default function TripScreen() {
                                 entry.kind === "travel" && entry.endDayOffset > 0
                                   ? `${timingLabel(entry)} +${entry.endDayOffset}`
                                   : timingLabel(entry),
+                                whoArrivesLabel(entry.arrivals),
                                 entry.notes,
                                 entry.booking === BOOKING_BOOKED ? "booked ✓" : null,
                                 entry.booking === BOOKING_NEEDED ? "to book" : null,

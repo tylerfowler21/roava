@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import type { PublicItemDTO, PublicTripDTO } from "@/lib/types";
-import { toPublicPlace } from "@/lib/types";
+import type { PublicTripDTO } from "@/lib/types";
+import { itemWithArrivalsInclude, toPublicItineraryItem } from "@/lib/travel-arrivals";
 
 /// What a published trip exposes. Same allow-list discipline as share links:
 /// the itinerary and its locations, never the owner's private notes or ratings
@@ -91,29 +91,13 @@ export async function loadPublishedTrip(tripId: string) {
       ...feedTripInclude,
       items: {
         orderBy: [{ dayIndex: "asc" }, { position: "asc" }],
-        include: { place: true, toPlace: true },
+        include: itemWithArrivalsInclude,
       },
     },
   });
   if (!trip || !trip.publishedAt) return null;
 
-  const items: PublicItemDTO[] = trip.items.map((item) => ({
-    id: item.id,
-    kind: item.kind,
-    mode: item.mode,
-    title: item.title,
-    emoji: item.emoji,
-    notes: item.notes,
-    dayIndex: item.dayIndex,
-    startTime: item.startTime,
-    endTime: item.endTime,
-    endDayOffset: item.endDayOffset,
-    minutes: item.minutes,
-    category: item.category,
-    position: item.position,
-    place: item.place ? toPublicPlace(item.place) : null,
-    toPlace: item.toPlace ? toPublicPlace(item.toPlace) : null,
-  }));
+  const items = trip.items.map(toPublicItineraryItem);
 
   return { trip, items };
 }

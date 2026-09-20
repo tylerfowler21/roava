@@ -114,6 +114,7 @@ model User {
   reportsMade    Report[]           @relation("reporter")
   reportsAbout   Report[]           @relation("reported")
   collaborations TripCollaborator[]
+  travelArrivals TravelArrival[]
   /// People this user follows
   following      Follow[]           @relation("follower")
   /// People who follow this user
@@ -484,14 +485,38 @@ model ItineraryItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  trip      Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  place     Place?         @relation("itemFrom", fields: [placeId], references: [id], onDelete: SetNull)
-  toPlace   Place?         @relation("itemTo", fields: [toPlaceId], references: [id], onDelete: SetNull)
+  trip      Trip             @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  place     Place?           @relation("itemFrom", fields: [placeId], references: [id], onDelete: SetNull)
+  toPlace   Place?           @relation("itemTo", fields: [toPlaceId], references: [id], onDelete: SetNull)
   documents TripDocument[]
+  arrivals  TravelArrival[]
 
   @@index([tripId, dayIndex, position])
   @@index([placeId])
   @@index([toPlaceId])
+}
+
+/// Who is arriving on a travel leg.
+///
+/// A trip with more than one family often has several flights landing at
+/// different times. Tagging people on the leg, rather than stuffing names into
+/// the notes, is what lets everyone on the trip see who lands when.
+///
+/// Optional: a leg with nobody tagged is still a perfectly good flight. Solo
+/// trips never need this; collaborative ones use it when arrivals stagger.
+model TravelArrival {
+  id        String   @id @default(cuid())
+  itemId    String
+  /// The person on this arrival. Must be the trip's owner or an accepted
+  /// collaborator — free-text names are not stored here.
+  userId    String
+  createdAt DateTime @default(now())
+
+  item ItineraryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, userId])
+  @@index([userId])
 }
 
 /// A file belonging to a trip: the hotel confirmation, the ticket, the

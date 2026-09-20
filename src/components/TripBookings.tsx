@@ -4,6 +4,7 @@ import { BOOKING_BOOKED, outstanding, tracked } from "@/lib/bookings";
 import { deadlineLabel, urgencyOf } from "@/lib/booking-deadline";
 import { dateForDay, formatDay } from "@/lib/trips";
 import type { ItineraryItemDTO, TripDTO } from "@/lib/types";
+import { whoArrivesLabel } from "@/lib/travel-arrivals";
 
 /// Everything on the trip that has to be booked, in one list.
 ///
@@ -79,6 +80,7 @@ export default function TripBookings({
                 {date ? ` · ${formatDay(date, { year: undefined })}` : ""}
                 {item.startTime ? ` · ${item.startTime}` : ""}
                 {item.place?.city ? ` · ${item.place.city}` : ""}
+                {whoArrivesLabel(item.arrivals) ? ` · ${whoArrivesLabel(item.arrivals)}` : ""}
               </p>
               {/* The deadline, once there is one and it still matters. A
                   booked thing has no deadline left to miss. */}

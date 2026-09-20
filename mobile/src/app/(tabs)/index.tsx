@@ -913,7 +913,18 @@ export default function MapScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        style={[styles.chipScroll, { top: insets.top + 8 + TOP_ROW_HEIGHT + 10 }]}
+        style={[
+          styles.chipScroll,
+          {
+            top: insets.top + 8 + TOP_ROW_HEIGHT + 10,
+            // The row everything else on this screen already knew about and
+            // this one did not: it is a scroller pinned to both edges, so
+            // with the list beside the map its chips ran underneath it and a
+            // half-chip sat at the seam.
+            left: mapLeft + 12,
+            right: mapRight + 12,
+          },
+        ]}
         contentContainerStyle={styles.chipRow}
       >
         {/* The other map, beside the filters for this one. It answers a
@@ -1531,8 +1542,8 @@ const styles = StyleSheet.create({
   avatarBlank: { alignItems: "center", justifyContent: "center" },
   /// Scrolls rather than wraps: the categories make this longer than the
   /// screen, and a second line of chips would eat the map.
-  chipScroll: { position: "absolute", left: 0, right: 0 },
-  chipRow: { flexDirection: "row", gap: 6, paddingHorizontal: 12 },
+  chipScroll: { position: "absolute" },
+  chipRow: { flexDirection: "row", gap: 6 },
   statusChip: {
     flexDirection: "row",
     alignItems: "center",

@@ -29,6 +29,7 @@ const PAIRS = [
   ["src/lib/publish-prompt.ts", "mobile/src/lib/publish-prompt.ts"],
   ["src/lib/document-types.ts", "mobile/src/lib/document-types.ts"],
   ["src/lib/arrival-names.ts", "mobile/src/lib/arrival-names.ts"],
+  ["src/lib/money.ts", "mobile/src/lib/money.ts"],
 ] as const;
 
 /// The mirror carries an explanatory header the original does not. Everything

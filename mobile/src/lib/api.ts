@@ -345,6 +345,9 @@ export type ItineraryItem = {
   /// Days later that a journey lands. A flight east across the Atlantic
   /// leaves at seven and arrives at eight the next morning.
   endDayOffset: number;
+  /// What it costs, in the trip currency's smallest unit. Null means nobody
+  /// has priced it, which is not the same as free.
+  costMinor: number | null;
   /// How long an ordinary stop takes, in minutes. Journeys keep clock times.
   minutes: number | null;
   category: string;
@@ -402,6 +405,8 @@ export type Trip = {
   startDate: string | null;
   endDate: string | null;
   color: string;
+  /// ISO 4217, for everything priced on this trip.
+  currency: string;
   publishedAt: string | null;
   /// When the owner was asked whether to publish it and said no. Only the
   /// finish-line offer reads this; publishing itself never looks at it.

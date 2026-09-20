@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { API_URL, api, upload, type ItineraryItem, type Trip, filePart } from "@/lib/api";
 import { useAuthHeaders } from "@/lib/use-auth-headers";
 import { type } from "@/lib/type";
+import { anyPriced, formatMoney, totalOf } from "@/lib/money";
 import { formatDay } from "@/lib/dates";
 
 const HEIGHT = 300;
@@ -185,7 +186,15 @@ export default function TripCover({
           {trip.title}
         </Text>
         <Text style={[type.metaStrong, styles.dates]} numberOfLines={1}>
-          {whenLine(trip, days)}
+          {[
+            whenLine(trip, days),
+            // What the plan adds up to so far. Only once something is priced,
+            // and deliberately not called a budget: it is the sum of what has
+            // been written down, which on a half-planned trip is a floor.
+            anyPriced(items) ? formatMoney(totalOf(items), trip.currency) : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </Text>
       </View>
     </View>

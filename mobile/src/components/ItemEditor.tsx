@@ -16,6 +16,7 @@ import { useCategories } from "@/lib/categories";
 import { usePlaceSearch } from "@/lib/use-place-search";
 import { searchPlaces } from "@/lib/search-places";
 import { destinationWords, goesTo } from "@/lib/trip-where";
+import { parseMoney, toMajorString } from "@/lib/money";
 import { currentPosition, nearbyPlaces } from "@/lib/here";
 import {
   ActivityIndicator,
@@ -117,6 +118,7 @@ export default function ItemEditor({
   places,
   documents,
   days,
+  currency,
   onClose,
   onSaved,
 }: {
@@ -130,6 +132,8 @@ export default function ItemEditor({
   /// How many days the trip has, for moving this to another one. Dragging
   /// reaches the days on screen; this reaches the rest.
   days: number;
+  /// The trip's currency, which decides how a typed price is read.
+  currency: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -220,6 +224,13 @@ export default function ItemEditor({
   /// both show their answer on the row itself.
   const [showDays, setShowDays] = useState(false);
   const [showDuration, setShowDuration] = useState(false);
+
+  /// What this costs, as typed. Kept as text rather than a number while it is
+  /// being edited: a field that reformats under the cursor is one that eats a
+  /// digit somebody was halfway through.
+  const [costText, setCostText] = useState(
+    existing?.costMinor != null ? toMajorString(existing.costMinor, currency) : "",
+  );
   const [showMore, setShowMore] = useState(
     Boolean(existing?.emoji || existing?.booking || existing?.bookingRef),
   );
@@ -439,6 +450,9 @@ export default function ItemEditor({
         // A flight is the one journey whose clock times are the fact.
         minutes: travel ? (flightLike ? null : parseDuration(legLength)) : minutes,
         endDayOffset: travel && endTime && nextDay ? 1 : 0,
+        // An emptied box means "nobody has priced this", which is not the
+        // same as free — so it saves null rather than zero.
+        costMinor: costText.trim() ? parseMoney(costText, currency) : null,
         mode: travel ? travelMode : null,
         placeId,
         toPlaceId: travel ? toPlaceId : null,
@@ -962,6 +976,18 @@ export default function ItemEditor({
               </View>
             </>
           )}
+
+          <Text style={[styles.label, { color: palette.muted }]}>
+            What it costs ({currency})
+          </Text>
+          <TextInput
+            value={costText}
+            onChangeText={setCostText}
+            keyboardType="decimal-pad"
+            placeholder="Leave empty if you don't know yet"
+            placeholderTextColor={palette.muted}
+            style={[styles.input, field]}
+          />
 
           <Text style={[styles.label, { color: palette.muted }]}>
             {existing?.place?.notes ? "Notes for this stop" : "Notes"}

@@ -55,6 +55,7 @@ export default function TripEditor({
   const [start, setStart] = useState(trip?.startDate?.slice(0, 10) ?? "");
   const [end, setEnd] = useState(trip?.endDate?.slice(0, 10) ?? "");
   const [color, setColor] = useState(trip?.color ?? TRIP_COLORS[0]);
+  const [currency, setCurrency] = useState(trip?.currency ?? "USD");
   const [published, setPublished] = useState(Boolean(trip?.publishedAt));
   const [busy, setBusy] = useState(false);
 
@@ -81,6 +82,7 @@ export default function TripEditor({
         startDate: start || null,
         endDate: end || null,
         color,
+        currency,
         ...(editing ? { published } : {}),
       };
       const saved = await api<{ trip: Trip }>(
@@ -234,6 +236,24 @@ export default function TripEditor({
               />
             ))}
           </View>
+          <Text style={[styles.label, { color: palette.muted }]}>Currency</Text>
+          <TextInput
+            value={currency}
+            onChangeText={(next) => setCurrency(next.toUpperCase().slice(0, 3))}
+            autoCapitalize="characters"
+            maxLength={3}
+            placeholder="USD"
+            placeholderTextColor={palette.muted}
+            style={[styles.input, { borderColor: palette.border, color: palette.ink }]}
+          />
+          {/* One per trip, and why. Somebody pricing a week through the
+              eurozone and Switzerland picks one and estimates the rest —
+              which is what they were doing on paper, and better than a total
+              nobody can compute without exchange rates. */}
+          <Text style={[styles.hint, { color: palette.muted }]}>
+            Everything priced on this trip is in this currency.
+          </Text>
+
           {/* What the colours mean, said once rather than left to be inferred.
               Every colour a trip can be given by where it goes is also one
               somebody can pick by hand, so a row of seven circles is really
@@ -284,6 +304,7 @@ export default function TripEditor({
 }
 
 const styles = StyleSheet.create({
+  hint: { fontSize: 12, marginTop: -4, marginBottom: 4 },
   header: {
     flexDirection: "row",
     alignItems: "center",

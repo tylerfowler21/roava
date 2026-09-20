@@ -34,6 +34,7 @@ import TripMap, { openDirections } from "@/components/TripMap";
 import { travelMode } from "@/lib/taxonomy";
 import { whoArrivesLabel } from "@/lib/arrival-names";
 import { isPacking } from "@/lib/resources";
+import { anyPriced, formatMoney, totalOf } from "@/lib/money";
 import { useAuth } from "@/lib/auth";
 import { dayLabel } from "@/lib/dates";
 import { tripRegions } from "@/lib/trip-where";
@@ -386,6 +387,7 @@ export default function TripScreen() {
         places={placeData?.places ?? []}
         documents={data?.documents ?? []}
         days={days}
+        currency={data.trip.currency}
         onClose={() => setItem(null)}
         onSaved={reload}
       />
@@ -556,6 +558,12 @@ export default function TripScreen() {
                         })(),
                         dayJourney(stops),
                         dayLabel(data.trip, day),
+                        // Only when somebody has priced something. A day of
+                        // unpriced stops showing a confident zero is worse
+                        // than showing nothing.
+                        anyPriced(stops)
+                          ? formatMoney(totalOf(stops), data.trip.currency)
+                          : null,
                       ]
                         .filter(Boolean)
                         .join(" · ")}
